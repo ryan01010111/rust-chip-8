@@ -20,8 +20,8 @@ fn main() -> Result<(), io::Error> {
         // check for ROMS dir
         let roms_path = Path::new("./roms");
         if !roms_path.exists() || !roms_path.is_dir() {
-            print!("Please add a folder containing your ROMs, named \"roms\" to the same folder");
-            println!(" as this program.");
+            eprintln!("\
+Please add a folder named \"roms\" containing your ROMs to the same folder as this program.");
             process::exit(1);
         }
 
