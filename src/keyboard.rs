@@ -1,10 +1,10 @@
+use crossterm::event;
 use std::{
-    thread,
     collections::HashMap,
-    sync::mpsc::{Receiver, Sender, TryRecvError, channel},
+    sync::mpsc::{channel, Receiver, Sender, TryRecvError},
+    thread,
     time::{Duration, Instant},
 };
-use crossterm::event;
 
 const KEY_PRESS_TTL: Duration = Duration::from_millis(100);
 
@@ -19,10 +19,7 @@ pub struct Keyboard {
 
 impl Keyboard {
     pub fn new() -> Self {
-        let (
-            tx,
-            rx
-        ) = channel::<(event::KeyCode, Instant)>();
+        let (tx, rx) = channel::<(event::KeyCode, Instant)>();
 
         Self {
             key_map: HashMap::from([
@@ -56,7 +53,7 @@ impl Keyboard {
     }
 
     pub fn listen(&mut self) {
-        let  tx = self.key_press_tx.clone();
+        let tx = self.key_press_tx.clone();
 
         thread::spawn(move || loop {
             let ev = event::read().unwrap();
@@ -64,11 +61,11 @@ impl Keyboard {
                 match key.code {
                     event::KeyCode::Char(_) => {
                         tx.send((key.code, Instant::now())).unwrap();
-                    },
+                    }
                     event::KeyCode::Esc => {
                         tx.send((key.code, Instant::now())).unwrap();
                         break;
-                    },
+                    }
                     _ => (),
                 }
             }
@@ -78,22 +75,20 @@ impl Keyboard {
     pub fn process_pressed_keys(&mut self) {
         loop {
             match self.key_press_rx.try_recv() {
-                Ok((key, timestamp)) => {
-                    match key {
-                        event::KeyCode::Char(ch) => {
-                            if ch == ' ' {
-                                self.pause_toggle_on = !self.pause_toggle_on;
-                                break;
-                            } else if let Some(hex_key) = self.key_map.get(&ch) {
-                                self.pressed_keys.insert(*hex_key, timestamp);
-                            }
-                        },
-                        event::KeyCode::Esc => {
-                            self.esc_pressed = true;
+                Ok((key, timestamp)) => match key {
+                    event::KeyCode::Char(ch) => {
+                        if ch == ' ' {
+                            self.pause_toggle_on = !self.pause_toggle_on;
                             break;
-                        },
-                        _ => (),
+                        } else if let Some(hex_key) = self.key_map.get(&ch) {
+                            self.pressed_keys.insert(*hex_key, timestamp);
+                        }
                     }
+                    event::KeyCode::Esc => {
+                        self.esc_pressed = true;
+                        break;
+                    }
+                    _ => (),
                 },
                 Err(TryRecvError::Empty) => break,
                 Err(TryRecvError::Disconnected) => panic!("Keyboard event receiver disconnected"),
@@ -104,22 +99,24 @@ impl Keyboard {
     pub fn get_next_key(&mut self, valid_after: Instant) -> Option<u8> {
         loop {
             match self.key_press_rx.try_recv() {
-                Ok((key, timestamp)) => {
-                    match key {
-                        event::KeyCode::Char(ch) => {
-                            if timestamp < valid_after { continue; }
-                            if let Some(val) = self.key_map.get(&ch) { return Some(*val); }
-                            if ch == ' ' {
-                                self.pause_toggle_on = !self.pause_toggle_on;
-                                return None;
-                            }
-                        },
-                        event::KeyCode::Esc => {
-                            self.esc_pressed = true;
-                            return None
-                        },
-                        _ => continue,
+                Ok((key, timestamp)) => match key {
+                    event::KeyCode::Char(ch) => {
+                        if timestamp < valid_after {
+                            continue;
+                        }
+                        if let Some(val) = self.key_map.get(&ch) {
+                            return Some(*val);
+                        }
+                        if ch == ' ' {
+                            self.pause_toggle_on = !self.pause_toggle_on;
+                            return None;
+                        }
                     }
+                    event::KeyCode::Esc => {
+                        self.esc_pressed = true;
+                        return None;
+                    }
+                    _ => continue,
                 },
                 Err(TryRecvError::Empty) => return None,
                 Err(TryRecvError::Disconnected) => panic!("Keyboard event receiver disconnected"),

@@ -1,10 +1,9 @@
 use crossterm::{
-    cursor, execute, queue, terminal,
+    cursor, execute, queue,
     style::{Color, Print, SetForegroundColor},
+    terminal,
 };
-use std::{
-    io::{Write, self, stdout},
-};
+use std::io::{self, stdout, Write};
 
 pub const COLS: usize = 64;
 pub const ROWS: usize = 32;
@@ -25,11 +24,13 @@ impl Display {
 
     pub fn init(&mut self) -> Result<(), io::Error> {
         terminal::enable_raw_mode()?;
-        execute!(self.stdout,
+        execute!(
+            self.stdout,
             terminal::EnterAlternateScreen,
             cursor::Hide,
             SetForegroundColor(Color::Green),
-        ).unwrap_or_else(|err| {
+        )
+        .unwrap_or_else(|err| {
             terminal::disable_raw_mode().unwrap();
             panic!("Failed to initialize display: {:?}", err);
         });
@@ -39,10 +40,7 @@ impl Display {
 
     pub fn exit(&mut self) -> Result<(), io::Error> {
         terminal::disable_raw_mode()?;
-        execute!(self.stdout,
-            terminal::LeaveAlternateScreen,
-            cursor::Show,
-        )?;
+        execute!(self.stdout, terminal::LeaveAlternateScreen, cursor::Show,)?;
 
         Ok(())
     }
@@ -62,7 +60,8 @@ impl Display {
         queue!(self.stdout, cursor::MoveTo(0, 0))?;
 
         let top_bottom_border = "=".repeat(COLS * 2);
-        queue!(self.stdout,
+        queue!(
+            self.stdout,
             Print(" "),
             Print(&top_bottom_border),
             cursor::MoveDown(1),
@@ -77,21 +76,21 @@ impl Display {
 
             // end of row
             if (idx + 1) % COLS == 0 {
-                queue!(self.stdout,
+                queue!(
+                    self.stdout,
                     Print("|"),
                     cursor::MoveDown(1),
                     cursor::MoveToColumn(0),
                 )?;
 
                 // row left border
-                if row != ROWS - 1 { queue!(self.stdout, Print("|"))?; }
+                if row != ROWS - 1 {
+                    queue!(self.stdout, Print("|"))?;
+                }
             }
         }
 
-        queue!(self.stdout,
-            Print(" "),
-            Print(&top_bottom_border),
-        )?;
+        queue!(self.stdout, Print(" "), Print(&top_bottom_border),)?;
 
         self.render_bottom_bar(false)?;
 
@@ -101,12 +100,17 @@ impl Display {
     }
 
     fn render_bottom_bar(&mut self, paused: bool) -> Result<(), io::Error> {
-        queue!(self.stdout,
+        queue!(
+            self.stdout,
             cursor::MoveTo(0, ROWS as u16 + 2),
             terminal::Clear(terminal::ClearType::UntilNewLine),
             Print(format!(
                 " {} KEY MAP: SPACE",
-                if paused { "RESUME / HIDE" } else { "PAUSE / SHOW" },
+                if paused {
+                    "RESUME / HIDE"
+                } else {
+                    "PAUSE / SHOW"
+                },
             )),
             cursor::MoveToColumn((COLS as u16 * 2) - 8),
             Print("EXIT: ESC\n"),
@@ -126,7 +130,8 @@ impl Display {
 
         queue!(self.stdout, terminal::Clear(terminal::ClearType::All))?;
 
-        queue!(self.stdout,
+        queue!(
+            self.stdout,
             cursor::MoveTo(grid_1_x, y_start),
             Print("HEX\n\n"),
             cursor::MoveToColumn(grid_1_x),
@@ -139,15 +144,14 @@ impl Display {
             Print("A    0    B    F"),
         )?;
 
-        queue!(self.stdout,
-            cursor::MoveTo(
-                grid_1_x + row_len + (margin / 2) - 2,
-                y_start + 5,
-            ),
+        queue!(
+            self.stdout,
+            cursor::MoveTo(grid_1_x + row_len + (margin / 2) - 2, y_start + 5,),
             Print("--->"),
         )?;
 
-        queue!(self.stdout,
+        queue!(
+            self.stdout,
             cursor::MoveTo(grid_2_x, y_start),
             Print("QWERTY\n\n"),
             cursor::MoveToColumn(grid_2_x),

@@ -6,13 +6,12 @@ use cpu::Cpu;
 use display::Display;
 use keyboard::Keyboard;
 
-use crossterm::{
-    cursor, style, terminal,
-};
+use crossterm::{cursor, style, terminal};
 use std::{
-    fs, process,
-    io::{Write, self},
+    fs,
+    io::{self, Write},
     path::Path,
+    process,
 };
 
 fn main() -> Result<(), io::Error> {
@@ -20,14 +19,17 @@ fn main() -> Result<(), io::Error> {
         // check for ROMS dir
         let roms_path = Path::new("./roms");
         if !roms_path.exists() || !roms_path.is_dir() {
-            eprintln!("\
-Please add a folder named \"roms\" containing your ROMs to the same folder as this program.");
+            eprintln!(
+                "\
+Please add a folder named \"roms\" containing your ROMs to the same folder as this program."
+            );
             process::exit(1);
         }
 
         let file_names = fs::read_dir(roms_path)?
             .flatten() // remove Errs
-            .filter(|dir_entry| match dir_entry.file_type() { // collect only files
+            .filter(|dir_entry| match dir_entry.file_type() {
+                // collect only files
                 Ok(file_type) => file_type.is_file(),
                 Err(_) => false,
             })
@@ -56,7 +58,8 @@ fn prompt_rom_selection(file_names: &Vec<std::ffi::OsString>) -> Result<usize, i
 
     let mut is_first_try = true;
     loop {
-        crossterm::execute!(stdout,
+        crossterm::execute!(
+            stdout,
             terminal::Clear(terminal::ClearType::All),
             style::SetForegroundColor(style::Color::Green),
             cursor::MoveTo(0, 0),
@@ -86,10 +89,13 @@ fn prompt_rom_selection(file_names: &Vec<std::ffi::OsString>) -> Result<usize, i
         stdin.read_line(&mut raw_input)?;
         let input = raw_input.trim();
 
-        if input == "q" { process::exit(0); }
+        if input == "q" {
+            process::exit(0);
+        }
         if let Ok(num) = input.parse::<usize>() {
-            if num < file_names.len() { return Ok(num); }
+            if num < file_names.len() {
+                return Ok(num);
+            }
         }
     }
-
 }
