@@ -112,8 +112,8 @@ impl Display {
                     "PAUSE / SHOW"
                 },
             )),
-            cursor::MoveToColumn((COLS as u16 * 2) - 8),
-            Print("EXIT: ESC\n"),
+            cursor::MoveToColumn((COLS as u16 * 2) - 13),
+            Print("MAIN MENU: ESC\n"),
             cursor::MoveToColumn(1),
             Print("=".repeat(COLS * 2)),
         )?;
